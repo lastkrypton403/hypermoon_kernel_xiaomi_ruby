@@ -55,14 +55,13 @@ jobs:
         # Step 3: Validate the new options against the build framework
         make olddefconfig
 
-        - name: Compile patched Kernel
+    - name: Compile patched Kernel
       run: |
         # Force a lowercase, legal Debian package name
         export KDEB_SOURCENAME="linux-hypermoon"
         
         # Compile using all available CPU cores
         make -j$(nproc) bindeb-pkg
-
 
     - name: Upload NetHunter Kernel Packages
       uses: actions/upload-artifact@v4
