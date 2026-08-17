@@ -14,23 +14,16 @@ jobs:
     - name: Install Build Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev bc libncurses5-dev libssl-dev
+        sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev bc \
+        libncurses5-dev libssl-dev rsync kmod cpio dwarves fakeroot kernel-package
 
-    - name: Fetch and Apply NetHunter Patches
-      run: |
-        # Download the Wi-Fi injection patch from aircrack
-        wget http://patches.aircrack-ng.org/mac80211.compat08082009.wl_frag+ack_v1.patch || true
-        
-        # Apply the patch safely; if it fails partially, it proceeds with other segments
-        if [ -f mac80211.compat08082009.wl_frag+ack_v1.patch ]; then
-          patch -p1 < mac80211.compat08082009.wl_frag+ack_v1.patch || echo "Patch applied with warnings"
-        fi
-
-    - name: Configure Kernel & Inject NetHunter Flags
+    - name: Configure Kernel Baseline
       run: |
         # Step 1: Generate your default system configuration base
         make defconfig
-        
+
+    - name: Inject NetHunter Configuration
+      run: |
         # Step 2: Force-append mandatory NetHunter variables to the .config file
         cat <<EOT >> .config
         # NetHunter Core Drivers
@@ -52,16 +45,16 @@ jobs:
         CONFIG_BT_HCIBTUSB=m
         EOT
         
-        # Step 3: Validate the new options against the build framework
+        # Step 3: Validate the configurations
         make olddefconfig
 
     - name: Compile patched Kernel
       run: |
-        # Force a lowercase, legal Debian package name
         export KDEB_SOURCENAME="linux-hypermoon"
         
-        # Compile using all available CPU cores
-        make -j$(nproc) bindeb-pkg
+        # Compile using all available CPU cores. 
+        # If compilation fails, this outputs the raw error without hiding behind dpkg rules
+        make -j$(nproc) bindeb-pkg || (echo "Compilation failed! Checking logs..." && exit 1)
 
     - name: Upload NetHunter Kernel Packages
       uses: actions/upload-artifact@v4
