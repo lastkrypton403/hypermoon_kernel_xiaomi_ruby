@@ -15,7 +15,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libncurses-dev bison flex libssl-dev libelf-dev bc \
-        libncurses5-dev libssl-dev rsync kmod cpio dwarves fakeroot kernel-package
+        libncurses5-dev libssl-dev rsync kmod cpio dwarves fakeroot
 
     - name: Configure Kernel Baseline
       run: |
